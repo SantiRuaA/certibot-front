@@ -1,0 +1,712 @@
+<!-- Backdrop -->
+<div
+  class="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm animate-fade-in"
+  aria-hidden="true"
+></div>
+
+<!-- Panel -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" (click)="close()">
+  <div
+    class="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh]
+           overflow-hidden flex flex-col animate-slide-in"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border flex-shrink-0">
+      <div>
+        <h2 class="text-base font-semibold text-foreground">Crear nuevo usuario</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">Completa todos los campos requeridos.</p>
+      </div>
+      <button appButton variant="ghost" size="icon" (click)="close()" aria-label="Cerrar">
+        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 001.06
+                   1.06L10 11.06l3.72 3.72a.75.75 0 001.06-1.06L11.06 10l3.72-3.72a.75.75
+                   0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Stepper ─────────────────────────────────────────────────────────── -->
+    <div class="px-6 py-3 border-b border-border flex-shrink-0">
+      <ol class="flex items-center">
+        @for (step of steps; track step.id; let idx = $index) {
+          <li class="flex items-center flex-1 min-w-0">
+            <button
+              type="button"
+              class="flex items-center gap-2 focus:outline-none min-w-0"
+              (click)="goToStep(step.id)"
+            >
+              <span
+                class="flex-shrink-0 h-7 w-7 rounded-full flex items-center justify-center
+                       text-xs font-semibold transition-all"
+                [class.bg-primary]="currentStep() === step.id"
+                [class.text-primary-foreground]="currentStep() === step.id"
+                [class.bg-primary/20]="currentStepIndex() > idx"
+                [class.text-primary]="currentStepIndex() > idx"
+                [class.bg-muted]="currentStep() !== step.id && currentStepIndex() <= idx"
+                [class.text-muted-foreground]="currentStep() !== step.id && currentStepIndex() <= idx"
+              >
+                @if (currentStepIndex() > idx) {
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75
+                         0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>
+                  </svg>
+                } @else {
+                  {{ idx + 1 }}
+                }
+              </span>
+              <span class="text-xs font-medium text-foreground truncate hidden sm:block">
+                {{ step.label }}
+              </span>
+            </button>
+            @if (idx < steps.length - 1) {
+              <div class="flex-1 h-px bg-border mx-2 min-w-2"></div>
+            }
+          </li>
+        }
+      </ol>
+    </div>
+
+    <!-- ── Form body ───────────────────────────────────────────────────────── -->
+    <div class="flex-1 overflow-y-auto scrollbar-quiet px-6 py-5" [formGroup]="form">
+
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      <!-- PASO 1: PERSONAL                                                     -->
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      @if (currentStep() === 'personal') {
+        <div class="space-y-4 animate-fade-up">
+
+          <!-- Tipo + Número -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="tipo_de_identificacion" class="text-sm font-medium text-foreground">
+                Tipo de identificación <span class="text-destructive">*</span>
+              </label>
+              <select
+                id="tipo_de_identificacion"
+                formControlName="tipo_de_identificacion"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('tipo_de_identificacion')"
+                [class.border-input]="!hasError('tipo_de_identificacion')"
+              >
+                @for (t of idTypes; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="numero_identificacion" class="text-sm font-medium text-foreground">
+                Número de identificación <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="numero_identificacion"
+                type="text"
+                formControlName="numero_identificacion"
+                placeholder="Ej. 1234567890"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('numero_identificacion')"
+                [class.border-input]="!hasError('numero_identificacion')"
+              />
+              @if (fieldError('numero_identificacion'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Nombres -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="primer_nombre" class="text-sm font-medium text-foreground">
+                Primer nombre <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="primer_nombre"
+                type="text"
+                formControlName="primer_nombre"
+                placeholder="Ej. Juan"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('primer_nombre')"
+                [class.border-input]="!hasError('primer_nombre')"
+              />
+              @if (fieldError('primer_nombre'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+            <div class="space-y-1.5">
+              <label for="segundo_nombre" class="text-sm font-medium text-foreground">Segundo nombre</label>
+              <input
+                id="segundo_nombre"
+                type="text"
+                formControlName="segundo_nombre"
+                placeholder="Opcional"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground placeholder:text-muted-foreground outline-none
+                       transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+          </div>
+
+          <!-- Apellidos -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="primer_apellido" class="text-sm font-medium text-foreground">
+                Primer apellido <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="primer_apellido"
+                type="text"
+                formControlName="primer_apellido"
+                placeholder="Ej. García"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('primer_apellido')"
+                [class.border-input]="!hasError('primer_apellido')"
+              />
+              @if (fieldError('primer_apellido'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+            <div class="space-y-1.5">
+              <label for="segundo_apellido" class="text-sm font-medium text-foreground">Segundo apellido</label>
+              <input
+                id="segundo_apellido"
+                type="text"
+                formControlName="segundo_apellido"
+                placeholder="Opcional"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground placeholder:text-muted-foreground outline-none
+                       transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+          </div>
+
+          <!-- Fecha de nacimiento -->
+          <div class="space-y-1.5">
+            <label for="fecha_nacimiento" class="text-sm font-medium text-foreground">
+              Fecha de nacimiento <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="fecha_nacimiento"
+              type="date"
+              formControlName="fecha_nacimiento"
+              class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                     outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+              [class.border-destructive]="hasError('fecha_nacimiento')"
+              [class.border-input]="!hasError('fecha_nacimiento')"
+            />
+            @if (fieldError('fecha_nacimiento'); as err) {
+              <p class="text-xs text-destructive">{{ err }}</p>
+            }
+          </div>
+
+        </div>
+      }
+
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      <!-- PASO 2: CONTACTO                                                     -->
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      @if (currentStep() === 'contact') {
+        <div class="space-y-4 animate-fade-up">
+
+          <!-- Correos -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="correo_sena" class="text-sm font-medium text-foreground">
+                Correo SENA <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="correo_sena"
+                type="email"
+                formControlName="correo_sena"
+                placeholder="usuario@sena.edu.co"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('correo_sena')"
+                [class.border-input]="!hasError('correo_sena')"
+              />
+              @if (fieldError('correo_sena'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+            <div class="space-y-1.5">
+              <label for="correo_particular" class="text-sm font-medium text-foreground">
+                Correo particular
+              </label>
+              <input
+                id="correo_particular"
+                type="email"
+                formControlName="correo_particular"
+                placeholder="Opcional"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('correo_particular')"
+                [class.border-input]="!hasError('correo_particular')"
+              />
+              @if (fieldError('correo_particular'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Tel entidad + Extensión + Celular -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="space-y-1.5">
+              <label for="telefono_entidad" class="text-sm font-medium text-foreground">
+                Teléfono entidad
+              </label>
+              <input
+                id="telefono_entidad"
+                type="tel"
+                formControlName="telefono_entidad"
+                placeholder="Opcional"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground placeholder:text-muted-foreground outline-none
+                       transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+            <div class="space-y-1.5">
+              <label for="extension_telefonica" class="text-sm font-medium text-foreground">
+                Extensión
+              </label>
+              <input
+                id="extension_telefonica"
+                type="text"
+                formControlName="extension_telefonica"
+                placeholder="Opcional"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground placeholder:text-muted-foreground outline-none
+                       transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+            <div class="space-y-1.5">
+              <label for="numero_celular" class="text-sm font-medium text-foreground">
+                Celular <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="numero_celular"
+                type="tel"
+                formControlName="numero_celular"
+                placeholder="Ej. 3001234567"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('numero_celular')"
+                [class.border-input]="!hasError('numero_celular')"
+              />
+              @if (fieldError('numero_celular'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- País -->
+          <div class="space-y-1.5">
+            <label for="pais_residencia" class="text-sm font-medium text-foreground">
+              País <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="pais_residencia"
+              type="text"
+              formControlName="pais_residencia"
+              placeholder="Colombia"
+              class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                     placeholder:text-muted-foreground outline-none transition-shadow
+                     focus-visible:ring-2 focus-visible:ring-ring/40"
+              [class.border-destructive]="hasError('pais_residencia')"
+              [class.border-input]="!hasError('pais_residencia')"
+            />
+            @if (fieldError('pais_residencia'); as err) {
+              <p class="text-xs text-destructive">{{ err }}</p>
+            }
+          </div>
+
+          <!-- Dpto / Municipio -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="dpto_residencia" class="text-sm font-medium text-foreground">
+                Departamento <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="dpto_residencia"
+                type="text"
+                formControlName="dpto_residencia"
+                placeholder="Ej. Antioquia"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('dpto_residencia')"
+                [class.border-input]="!hasError('dpto_residencia')"
+              />
+              @if (fieldError('dpto_residencia'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+            <div class="space-y-1.5">
+              <label for="mncpio_residencia" class="text-sm font-medium text-foreground">
+                Municipio <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="mncpio_residencia"
+                type="text"
+                formControlName="mncpio_residencia"
+                placeholder="Ej. Medellín"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('mncpio_residencia')"
+                [class.border-input]="!hasError('mncpio_residencia')"
+              />
+              @if (fieldError('mncpio_residencia'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Dirección -->
+          <div class="space-y-1.5">
+            <label for="direccion_residencia" class="text-sm font-medium text-foreground">
+              Dirección <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="direccion_residencia"
+              type="text"
+              formControlName="direccion_residencia"
+              placeholder="Ej. Cra 50 # 45-12 Apto 301"
+              class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                     placeholder:text-muted-foreground outline-none transition-shadow
+                     focus-visible:ring-2 focus-visible:ring-ring/40"
+              [class.border-destructive]="hasError('direccion_residencia')"
+              [class.border-input]="!hasError('direccion_residencia')"
+            />
+            @if (fieldError('direccion_residencia'); as err) {
+              <p class="text-xs text-destructive">{{ err }}</p>
+            }
+          </div>
+
+        </div>
+      }
+
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      <!-- PASO 3: CONTRATO                                                     -->
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      @if (currentStep() === 'contract') {
+        <div class="space-y-4 animate-fade-up">
+
+          <!-- Rol + Estado -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="rol_asignado" class="text-sm font-medium text-foreground">
+                Rol asignado <span class="text-destructive">*</span>
+              </label>
+              <select
+                id="rol_asignado"
+                formControlName="rol_asignado"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('rol_asignado')"
+                [class.border-input]="!hasError('rol_asignado')"
+              >
+                @for (r of roles; track r) {
+                  <option [value]="r">{{ r }}</option>
+                }
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="estado_actual" class="text-sm font-medium text-foreground">
+                Estado <span class="text-destructive">*</span>
+              </label>
+              <select
+                id="estado_actual"
+                formControlName="estado_actual"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+              >
+                <option [ngValue]="true">Activo</option>
+                <option [ngValue]="false">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Número contrato -->
+          <div class="space-y-1.5">
+            <label for="numero_contrato" class="text-sm font-medium text-foreground">
+              Número de contrato
+            </label>
+            <input
+              id="numero_contrato"
+              type="text"
+              formControlName="numero_contrato"
+              placeholder="Opcional"
+              class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                     text-foreground placeholder:text-muted-foreground outline-none
+                     transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+            />
+          </div>
+
+          <!-- Fechas contrato -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="fecha_inicio_contrato" class="text-sm font-medium text-foreground">
+                Inicio contrato <span class="text-destructive">*</span>
+              </label>
+              <input
+                id="fecha_inicio_contrato"
+                type="date"
+                formControlName="fecha_inicio_contrato"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 text-sm text-foreground
+                       outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('fecha_inicio_contrato')"
+                [class.border-input]="!hasError('fecha_inicio_contrato')"
+              />
+              @if (fieldError('fecha_inicio_contrato'); as err) {
+                <p class="text-xs text-destructive">{{ err }}</p>
+              }
+            </div>
+            <div class="space-y-1.5">
+              <label for="fecha_fin_contrato" class="text-sm font-medium text-foreground">
+                Fin contrato
+              </label>
+              <input
+                id="fecha_fin_contrato"
+                type="date"
+                formControlName="fecha_fin_contrato"
+                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm
+                       text-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+            </div>
+          </div>
+
+        </div>
+      }
+
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      <!-- PASO 4: CUENTA                                                       -->
+      <!-- ──────────────────────────────────────────────────────────────────── -->
+      @if (currentStep() === 'account') {
+        <div class="space-y-4 animate-fade-up">
+
+          <!-- Info nota -->
+          <div class="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40
+                      px-3 py-2.5 text-sm text-muted-foreground">
+            <svg class="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9
+                   9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747
+                   15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0
+                   009.253 9H9z"/>
+            </svg>
+            <span>
+              El usuario podrá ingresar al sistema con su correo SENA y esta contraseña.
+              El nombre de usuario será derivado automáticamente del correo.
+            </span>
+          </div>
+
+          <!-- Contraseña -->
+          <div class="space-y-1.5">
+            <label for="password" class="text-sm font-medium text-foreground">
+              Contraseña <span class="text-destructive">*</span>
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Mínimo 8 caracteres"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 pr-9 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('password')"
+                [class.border-input]="!hasError('password')"
+              />
+              <button
+                type="button"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground
+                       hover:text-foreground transition-colors"
+                (click)="showPassword.set(!showPassword())"
+                tabindex="-1"
+              >
+                @if (showPassword()) {
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029
+                         10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0
+                         00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.091
+                         1.092a4 4 0 00-5.557-5.557z"/>
+                    <path d="M10.748 13.93l2.523 2.523a9.987 9.987 0 01-3.27.547c-4.258 0-7.894-2.66-9.337-6.41a1.651
+                             1.651 0 010-1.186A10.007 10.007 0 012.839 6.02L6.07 9.252a4 4 0 004.678 4.678z"/>
+                  </svg>
+                } @else {
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336
+                         6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (fieldError('password'); as err) {
+              <p class="text-xs text-destructive">{{ err }}</p>
+            }
+          </div>
+
+          <!-- Confirmar contraseña -->
+          <div class="space-y-1.5">
+            <label for="confirmar_contrasena" class="text-sm font-medium text-foreground">
+              Confirmar contraseña <span class="text-destructive">*</span>
+            </label>
+            <div class="relative">
+              <input
+                id="confirmar_contrasena"
+                [type]="showConfirm() ? 'text' : 'password'"
+                formControlName="confirmar_contrasena"
+                placeholder="Repite la contraseña"
+                class="flex h-9 w-full rounded-lg border bg-background px-3 pr-9 text-sm text-foreground
+                       placeholder:text-muted-foreground outline-none transition-shadow
+                       focus-visible:ring-2 focus-visible:ring-ring/40"
+                [class.border-destructive]="hasError('confirmar_contrasena') || passwordMismatch"
+                [class.border-input]="!hasError('confirmar_contrasena') && !passwordMismatch"
+              />
+              <button
+                type="button"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground
+                       hover:text-foreground transition-colors"
+                (click)="showConfirm.set(!showConfirm())"
+                tabindex="-1"
+              >
+                @if (showConfirm()) {
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029
+                         10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0
+                         00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.091
+                         1.092a4 4 0 00-5.557-5.557z"/>
+                    <path d="M10.748 13.93l2.523 2.523a9.987 9.987 0 01-3.27.547c-4.258 0-7.894-2.66-9.337-6.41a1.651
+                             1.651 0 010-1.186A10.007 10.007 0 012.839 6.02L6.07 9.252a4 4 0 004.678 4.678z"/>
+                  </svg>
+                } @else {
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336
+                         6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (passwordMismatch) {
+              <p class="text-xs text-destructive">Las contraseñas no coinciden.</p>
+            } @else if (fieldError('confirmar_contrasena'); as err) {
+              <p class="text-xs text-destructive">{{ err }}</p>
+            }
+          </div>
+
+          <!-- Submit error -->
+          @if (submitError()) {
+            <div class="flex items-start gap-2.5 rounded-lg border border-destructive/40
+                        bg-destructive/5 px-3 py-2.5 text-sm text-destructive animate-fade-up">
+              <svg class="h-4 w-4 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72
+                     1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75
+                     0 00-1.06-1.06L10 8.94 8.28 7.22z"/>
+              </svg>
+              <span>{{ submitError() }}</span>
+            </div>
+          }
+
+          <!-- Submit success -->
+          @if (submitSuccess()) {
+            <div class="flex items-start gap-2.5 rounded-lg border border-success/40
+                        bg-success/5 px-3 py-2.5 text-sm text-success animate-fade-up">
+              <svg class="h-4 w-4 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75
+                     0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>
+              </svg>
+              <span>¡Usuario creado correctamente!</span>
+            </div>
+          }
+
+        </div>
+      }
+
+    </div>
+
+    <!-- ── Footer / Navigation ─────────────────────────────────────────────── -->
+    <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-border
+                bg-muted/20 flex-shrink-0">
+      <button
+        appButton variant="ghost" size="sm"
+        type="button"
+        (click)="goPrev()"
+        [disabled]="currentStepIndex() === 0 || submitting()"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75
+               0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"/>
+        </svg>
+        Anterior
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          appButton variant="outline" size="sm"
+          type="button"
+          (click)="close()"
+          [disabled]="submitting()"
+        >
+          Cancelar
+        </button>
+
+        @if (currentStepIndex() < steps.length - 1) {
+          <button
+            appButton variant="default" size="sm"
+            type="button"
+            (click)="goNext()"
+          >
+            Siguiente
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75
+                   0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"/>
+            </svg>
+          </button>
+        } @else {
+          <button
+            appButton variant="default" size="sm"
+            type="button"
+            (click)="onSubmit()"
+            [disabled]="submitting() || submitSuccess()"
+          >
+            @if (submitting()) {
+              <app-spinner size="sm" />
+              Creando…
+            } @else {
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75
+                     0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>
+              </svg>
+              Crear usuario
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -14,19 +14,22 @@ import { AvatarComponent } from '../../../shared/ui/avatar';
 import { BadgeComponent } from '../../../shared/ui/badge';
 import { ButtonDirective } from '../../../shared/ui/button';
 import { SpinnerComponent } from '../../../shared/ui/spinner';
+import { CreateUserDialogComponent } from '../create-user-dialog/create-user-dialog.component';
 
 const PAGE_SIZES = [10, 25, 50];
 
 @Component({
   selector: 'app-users-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AvatarComponent, BadgeComponent, ButtonDirective, SpinnerComponent],
+  imports: [AvatarComponent, BadgeComponent, ButtonDirective, SpinnerComponent, CreateUserDialogComponent],
   templateUrl: './users-list.component.html',
 })
 export class UsersListComponent implements OnInit {
   protected readonly auth = inject(AuthStore);
   protected readonly store = inject(UsersStore);
   protected readonly router = inject(Router);
+
+  protected readonly showCreateDialog = signal(false);
 
   // ─── Pagination signals ───────────────────────────────────────────────────
   protected readonly pageSize = signal(PAGE_SIZES[0]);
@@ -119,6 +122,14 @@ export class UsersListComponent implements OnInit {
 
   protected reload(): void {
     this.store.reload().subscribe();
+  }
+
+  protected openCreateDialog(): void {
+    this.showCreateDialog.set(true);
+  }
+
+  protected closeCreateDialog(): void {
+    this.showCreateDialog.set(false);
   }
 
   protected logout(): void {

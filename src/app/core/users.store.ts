@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppUser } from './models';
 import { UserService } from './services/user.service';
+import { CreateUserPayload } from './services/user.service';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -77,5 +78,22 @@ export class UsersStore {
   reload(): Observable<AppUser[]> {
     this._loaded.set(false);
     return this.loadUsers();
+  }
+
+  createUser(payload: CreateUserPayload): Observable<AppUser> {
+    this._loading.set(true);
+    this._error.set(null);
+
+    return this.userService.createUser(payload).pipe(
+      tap((newUser) => {
+        this._users.update((list) => [newUser, ...list]);
+        this._loading.set(false);
+      }),
+      catchError((err) => {
+        this._loading.set(false);
+        this._error.set('Error al crear el usuario. Verifica los datos.');
+        return throwError(() => err);
+      }),
+    );
   }
 }

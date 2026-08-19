@@ -52,23 +52,38 @@
           Administra los usuarios registrados en el sistema.
         </p>
       </div>
-      <button
-        appButton
-        variant="outline"
-        size="sm"
-        (click)="reload()"
-        [disabled]="store.loading()"
-        title="Recargar"
-      >
-        <svg class="h-4 w-4" [class.animate-spin]="store.loading()"
-             viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993
-               0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0
-               0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
-        </svg>
-        Recargar
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          appButton
+          variant="default"
+          size="sm"
+          (click)="openCreateDialog()"
+          title="Crear nuevo usuario"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000
+                     1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/>
+          </svg>
+          Nuevo usuario
+        </button>
+        <button
+          appButton
+          variant="outline"
+          size="sm"
+          (click)="reload()"
+          [disabled]="store.loading()"
+          title="Recargar"
+        >
+          <svg class="h-4 w-4" [class.animate-spin]="store.loading()"
+               viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993
+                 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0
+                 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          Recargar
+        </button>
+      </div>
     </div>
 
     <!-- ── Stats cards ──────────────────────────────────────────────────── -->
@@ -336,5 +351,12 @@
     </div>
 
   </main>
+
+  <!-- ── Create user dialog ────────────────────────────────────────────── -->
+  @if (showCreateDialog()) {
+    <app-create-user-dialog
+      (closed)="closeCreateDialog()"
+    />
+  }
 
 </div>
