@@ -1,0 +1,185 @@
+<div class="min-h-screen bg-background flex items-center justify-center p-4">
+
+  <!-- Background glow -->
+  <div class="absolute inset-0 -z-10 overflow-hidden">
+    <div class="absolute left-1/2 top-0 -translate-x-1/2 w-[800px] h-[600px]
+                bg-primary/5 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Card container -->
+  <div class="w-full max-w-sm animate-fade-up">
+
+    <!-- Logo & Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center mb-4">
+        <img
+          src="Logo-de-SENA.png"
+          alt="Logo SENA"
+          class="h-20 w-auto object-contain drop-shadow-sm"
+        />
+      </div>
+      <h1 class="text-2xl font-bold text-foreground tracking-tight">Certibot</h1>
+    </div>
+
+    <!-- Card panel -->
+    <div class="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
+
+      <!-- ── STEP 1: Email ────────────────────────────────────────────── -->
+      @if (auth.step() === 'email') {
+
+        <div class="space-y-1 animate-slide-in">
+          <h2 class="text-base font-semibold text-foreground">Ingresar</h2>
+          <p class="text-sm text-muted-foreground">
+            Ingresa tu correo SENA y te enviaremos un código de verificación.
+          </p>
+        </div>
+
+        <form (submit)="submitEmail($event)" class="space-y-4 animate-slide-in">
+
+          <div class="space-y-1.5">
+            <label for="email" class="text-sm font-medium text-foreground">
+              Correo SENA
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="usuario@sena.edu.co"
+              autocomplete="email"
+              [class]="inputClass"
+              [value]="identifier()"
+              (input)="identifier.set($any($event.target).value)"
+              [disabled]="auth.pending()"
+            />
+          </div>
+
+          @if (auth.error()) {
+            <div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5
+                        text-sm text-destructive animate-fade-up">
+              <svg class="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06
+                     1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72
+                     1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0
+                     00-1.06-1.06L10 8.94 8.28 7.22z"/>
+              </svg>
+              {{ auth.error() }}
+            </div>
+          }
+
+          <button
+            appButton
+            type="submit"
+            [extraClass]="'w-full'"
+            [disabled]="!canRequestOtp()"
+          >
+            @if (auth.pending()) {
+              <app-spinner size="sm" color="text-primary-foreground" />
+              Enviando código…
+            } @else {
+              Enviar código OTP
+            }
+          </button>
+
+        </form>
+
+      }
+
+      <!-- ── STEP 2: OTP boxes ─────────────────────────────────────────── -->
+      @if (auth.step() === 'otp') {
+
+        <div class="space-y-1 animate-slide-in">
+          <h2 class="text-base font-semibold text-foreground">Verificar código</h2>
+          <p class="text-sm text-muted-foreground">
+            Enviamos un código de 6 dígitos a<br/>
+            <span class="font-medium text-foreground">{{ auth.identifier() }}</span>.
+            Revisa tu bandeja de entrada.
+          </p>
+        </div>
+
+        <form (submit)="submitOtp($event)" class="space-y-5 animate-slide-in">
+
+          <!-- 6 OTP digit boxes -->
+          <div class="flex justify-center gap-2">
+            @for (digit of digits(); track $index; let i = $index) {
+              <input
+                #digitInput
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                pattern="[0-9]"
+                autocomplete="one-time-code"
+                [value]="digit"
+                (input)="onDigitInput(i, $event)"
+                (keydown)="onDigitKeydown(i, $event)"
+                (paste)="onPaste($event)"
+                (focus)="$any($event.target).select()"
+                [disabled]="auth.pending()"
+                class="w-11 h-13 rounded-xl border-2 text-center text-xl font-mono
+                       font-bold text-foreground bg-background outline-none
+                       transition-all duration-150 cursor-text select-all
+                       border-input
+                       focus:border-primary focus:ring-2 focus:ring-primary/20
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+                [class.border-primary]="digit"
+                [class.bg-primary/5]="digit"
+              />
+            }
+          </div>
+
+          <!-- Helper hint -->
+          <p class="text-center text-xs text-muted-foreground -mt-1">
+            Puedes pegar el código directamente
+          </p>
+
+          @if (auth.error()) {
+            <div class="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5
+                        text-sm text-destructive animate-fade-up">
+              <svg class="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06
+                     1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72
+                     1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0
+                     00-1.06-1.06L10 8.94 8.28 7.22z"/>
+              </svg>
+              {{ auth.error() }}
+            </div>
+          }
+
+          <button
+            appButton
+            type="submit"
+            [extraClass]="'w-full'"
+            [disabled]="!canVerifyOtp()"
+          >
+            @if (auth.pending()) {
+              <app-spinner size="sm" color="text-primary-foreground" />
+              Verificando…
+            } @else {
+              Verificar y entrar
+            }
+          </button>
+
+          <button
+            appButton
+            type="button"
+            variant="ghost"
+            [extraClass]="'w-full text-muted-foreground text-sm'"
+            (click)="goBack()"
+            [disabled]="auth.pending()"
+          >
+            ← Cambiar correo
+          </button>
+
+        </form>
+
+      }
+
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs text-muted-foreground mt-6">
+      SENA © {{ year }}. Servicio Nacional de Aprendizaje.
+    </p>
+
+  </div>
+</div>

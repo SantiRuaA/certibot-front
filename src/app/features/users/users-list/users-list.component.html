@@ -1,0 +1,340 @@
+<div class="min-h-screen bg-background">
+
+  <!-- ── Top Navbar ──────────────────────────────────────────────────────── -->
+  <header class="sticky top-0 z-10 bg-card border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-2.5 flex-shrink-0">
+        <img
+          src="Logo-de-SENA.png"
+          alt="Logo SENA"
+          class="h-8 w-auto object-contain"
+        />
+        <span class="font-semibold text-foreground">Certibot</span>
+      </div>
+
+      <!-- User info + logout -->
+      <div class="flex items-center gap-3">
+        <span class="hidden sm:block text-sm text-muted-foreground">
+          {{ auth.userEmail() }}
+        </span>
+        @if (auth.userRole()) {
+          <app-badge variant="default">{{ auth.userRole() }}</app-badge>
+        }
+        <button
+          appButton
+          variant="outline"
+          size="sm"
+          (click)="logout()"
+          title="Cerrar sesión"
+        >
+          <!-- Logout icon -->
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 10h10m0 0-3-3m3 3-3 3M7 4.5H4a1 1 0 00-1 1v9a1 1 0 001 1h3"/>
+          </svg>
+          <span class="hidden sm:inline">Salir</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ── Main content ────────────────────────────────────────────────────── -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Page heading -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-semibold text-foreground">Gestión de Usuarios</h1>
+        <p class="text-sm text-muted-foreground mt-0.5">
+          Administra los usuarios registrados en el sistema.
+        </p>
+      </div>
+      <button
+        appButton
+        variant="outline"
+        size="sm"
+        (click)="reload()"
+        [disabled]="store.loading()"
+        title="Recargar"
+      >
+        <svg class="h-4 w-4" [class.animate-spin]="store.loading()"
+             viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993
+               0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0
+               0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+        </svg>
+        Recargar
+      </button>
+    </div>
+
+    <!-- ── Stats cards ──────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      @for (stat of stats(); track stat.label) {
+        <div class="bg-card rounded-xl border border-border p-4 animate-fade-up">
+          <p class="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            {{ stat.label }}
+          </p>
+          <p class="text-2xl font-bold text-foreground mt-1">
+            @if (store.loading()) {
+              <span class="animate-pulse text-muted-foreground">—</span>
+            } @else {
+              {{ stat.value }}
+            }
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- ── Table card ───────────────────────────────────────────────────── -->
+    <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-up">
+
+      <!-- Table toolbar -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 border-b border-border">
+
+        <!-- Search -->
+        <div class="relative flex-1 max-w-sm">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+               viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328
+                 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"/>
+          </svg>
+          <input
+            type="search"
+            placeholder="Buscar por nombre, correo, rol…"
+            class="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm
+                   text-foreground outline-none placeholder:text-muted-foreground
+                   focus-visible:ring-2 focus-visible:ring-ring/40 transition-shadow"
+            [value]="store.query()"
+            (input)="onSearch($event)"
+          />
+        </div>
+
+        <!-- Page size selector -->
+        <div class="flex items-center gap-2 text-sm text-muted-foreground flex-shrink-0">
+          <span>Mostrar</span>
+          <select
+            class="h-9 rounded-lg border border-input bg-background px-2 text-sm
+                   text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            [value]="pageSize()"
+            (change)="changePageSize($event)"
+          >
+            @for (size of pageSizes; track size) {
+              <option [value]="size">{{ size }}</option>
+            }
+          </select>
+          <span>por página</span>
+        </div>
+
+      </div>
+
+      <!-- ── Loading state ─────────────────────────────────────────────── -->
+      @if (store.loading()) {
+        <div class="flex flex-col items-center justify-center py-20 gap-3">
+          <app-spinner size="lg" />
+          <p class="text-sm text-muted-foreground">Cargando usuarios…</p>
+        </div>
+      }
+
+      <!-- ── Error state ───────────────────────────────────────────────── -->
+      @if (!store.loading() && store.error()) {
+        <div class="flex flex-col items-center justify-center py-20 gap-3 animate-fade-up">
+          <div class="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <svg class="h-6 w-6 text-destructive" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06
+                   1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72
+                   1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0
+                   00-1.06-1.06L10 8.94 8.28 7.22z"/>
+            </svg>
+          </div>
+          <div class="text-center">
+            <p class="font-medium text-foreground">Error al cargar</p>
+            <p class="text-sm text-muted-foreground">{{ store.error() }}</p>
+          </div>
+          <button appButton variant="outline" size="sm" (click)="reload()">Reintentar</button>
+        </div>
+      }
+
+      <!-- ── Empty state ───────────────────────────────────────────────── -->
+      @if (!store.loading() && !store.error() && store.filtered().length === 0) {
+        <div class="flex flex-col items-center justify-center py-20 gap-3 animate-fade-up">
+          <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+            <svg class="h-6 w-6 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016
+                       0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5
+                       5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+            </svg>
+          </div>
+          <div class="text-center">
+            <p class="font-medium text-foreground">Sin resultados</p>
+            <p class="text-sm text-muted-foreground">
+              No se encontraron usuarios con esa búsqueda.
+            </p>
+          </div>
+        </div>
+      }
+
+      <!-- ── Table ─────────────────────────────────────────────────────── -->
+      @if (!store.loading() && !store.error() && store.filtered().length > 0) {
+
+        <div class="overflow-x-auto scrollbar-quiet">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border bg-muted/40">
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Usuario
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Correo SENA
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Rol
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Estado
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Contrato
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Inicio contrato
+                </th>
+                <th class="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
+                  Fin contrato
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (user of paginatedUsers(); track user.id) {
+                <tr class="hover:bg-muted/30 transition-colors animate-fade-in group">
+
+                  <!-- User column with avatar -->
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <app-avatar [name]="user.fullName" size="sm" />
+                      <div class="min-w-0">
+                        <p class="font-medium text-foreground truncate">{{ user.fullName }}</p>
+                        <p class="text-xs text-muted-foreground truncate">{{ user.usuarioAsignado }}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Email -->
+                  <td class="px-4 py-3 text-muted-foreground">
+                    {{ user.correoSena }}
+                  </td>
+
+                  <!-- Rol -->
+                  <td class="px-4 py-3">
+                    <app-badge variant="default">{{ user.rolAsignado }}</app-badge>
+                  </td>
+
+                  <!-- Estado -->
+                  <td class="px-4 py-3">
+                    <app-badge [variant]="statusVariant(user.estadoActual)">
+                      @if (user.estadoActual) {
+                        <svg class="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
+                          <circle cx="6" cy="6" r="6"/>
+                        </svg>
+                        Activo
+                      } @else {
+                        Inactivo
+                      }
+                    </app-badge>
+                  </td>
+
+                  <!-- Contrato -->
+                  <td class="px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {{ user.numeroContrato }}
+                  </td>
+
+                  <!-- Inicio contrato -->
+                  <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                    {{ formatDate(user.fechaInicioContrato) }}
+                  </td>
+
+                  <!-- Fin contrato -->
+                  <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                    {{ formatDate(user.fechaFinContrato) }}
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Pagination bar ─────────────────────────────────────────── -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3
+                    px-4 py-3 border-t border-border bg-muted/20">
+
+          <!-- Showing X–Y of Z -->
+          <p class="text-sm text-muted-foreground">
+            Mostrando
+            <span class="font-medium text-foreground">{{ showingFrom() }}–{{ showingTo() }}</span>
+            de
+            <span class="font-medium text-foreground">{{ store.filtered().length }}</span>
+            usuarios
+          </p>
+
+          <!-- Page buttons -->
+          <nav class="flex items-center gap-1">
+
+            <button
+              appButton variant="outline" size="icon"
+              (click)="prevPage()"
+              [disabled]="currentPage() === 1"
+              title="Anterior"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0
+                     11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0
+                     011.06.02z"/>
+              </svg>
+            </button>
+
+            @for (page of pageNumbers(); track $index) {
+              @if (page === '...') {
+                <span class="px-2 py-1 text-muted-foreground text-sm">…</span>
+              } @else {
+                <button
+                  appButton
+                  [variant]="currentPage() === page ? 'default' : 'ghost'"
+                  size="icon"
+                  (click)="setPage(page)"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+
+            <button
+              appButton variant="outline" size="icon"
+              (click)="nextPage()"
+              [disabled]="currentPage() === totalPages()"
+              title="Siguiente"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0
+                     111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0
+                     01-1.06-.02z"/>
+              </svg>
+            </button>
+
+          </nav>
+        </div>
+
+      }
+
+    </div>
+
+  </main>
+
+</div>
